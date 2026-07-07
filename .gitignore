@@ -1,0 +1,11 @@
+# Large data files
+*.npy
+*.csv
+*.joblib
+*.pkl
+data/raw/
+models/
+
+# Exceptions — keep results CSVs and keyword txt files
+!results/*.csv
+!data/keywords/*.txt

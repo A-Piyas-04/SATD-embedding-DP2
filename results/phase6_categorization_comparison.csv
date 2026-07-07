@@ -1,0 +1,21 @@
+artifact_type,embedding,classifier,macro_f1,vs_baseline
+code_comment,—,Paper (BERT+AugGPT),0.882,—  (baseline)
+code_comment,qwen3,xgboost,0.9,+0.0180
+code_comment,qwen3,logreg,0.8556,-0.0264
+code_comment,e5,xgboost,0.9041,+0.0221
+code_comment,e5,logreg,0.8554,-0.0266
+issue,—,Paper (BERT+AugGPT),0.899,—  (baseline)
+issue,qwen3,xgboost,0.941,+0.0420
+issue,qwen3,logreg,0.8679,-0.0311
+issue,e5,xgboost,0.9385,+0.0395
+issue,e5,logreg,0.8851,-0.0139
+pull_request,—,Paper (BERT+AugGPT),0.876,—  (baseline)
+pull_request,qwen3,xgboost,0.927,+0.0510
+pull_request,qwen3,logreg,0.8634,-0.0126
+pull_request,e5,xgboost,0.936,+0.0600
+pull_request,e5,logreg,0.9264,+0.0504
+commit,—,Supervisor's replication (BERT),0.9804,—  (baseline)
+commit,qwen3,xgboost,0.9589,-0.0215
+commit,qwen3,logreg,0.9117,-0.0687
+commit,e5,xgboost,0.9378,-0.0426
+commit,e5,logreg,0.9127,-0.0677
