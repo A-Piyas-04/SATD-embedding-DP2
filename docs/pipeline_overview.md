@@ -175,3 +175,95 @@
 # Results are broken down by artifact type so we can see where each
 # embedding model performs better or worse than the original method.
 # -----------------------------------------------------------------------------
+
+
+# =============================================================================
+# FUTURE WORK
+# =============================================================================
+# The following phases are planned but not yet implemented.
+# Relevant input files (keyword lists, etc.) are kept in data/keywords/
+# so this work can be picked up without re-running earlier phases.
+# =============================================================================
+ 
+ 
+# -----------------------------------------------------------------------------
+# FUTURE PHASE 7 — CODE-SPECIFIC EMBEDDING MODELS
+# -----------------------------------------------------------------------------
+# Motivation:
+#   The current Qwen3 and E5-Large models are general-purpose text embeddings.
+#   Code-specific models pre-trained on source code may capture SATD patterns
+#   in code comments and commit messages more accurately.
+#
+# Planned models to evaluate (all available on Hugging Face):
+#   - CodeBERT       (microsoft/codebert-base)
+#   - GraphCodeBERT  (microsoft/graphcodebert-base)
+#   - UniXcoder      (microsoft/unixcoder-base)
+#   - CodeT5         (Salesforce/codet5-base — uses T5EncoderModel, not AutoModel)
+#
+# Approach:
+#   Same pipeline as Phase 4 (mean pooling, L2 normalize, batch size 32),
+#   run across all 4 artifact types (not just code comments).
+#   Results would be added to the Phase 6 comparison table.
+#
+# Note: CodeT5 requires T5EncoderModel from transformers, not AutoModel.
+#       UniXcoder may require trust_remote_code=True depending on version.
+# -----------------------------------------------------------------------------
+ 
+ 
+# -----------------------------------------------------------------------------
+# FUTURE PHASE 8 — SATD KEYWORD SIGNAL FEATURES
+# -----------------------------------------------------------------------------
+# Motivation:
+#   Known SATD keywords (todo, fixme, hack, flaky, typo) are strong, cheap
+#   signals that general-purpose embeddings may underweight. Adding explicit
+#   keyword-match features alongside the embedding vectors may improve
+#   classification, particularly for the identification task.
+#
+# Keyword source:
+#   8 scored keyword lists from the supervisor's GitHub repo, stored in
+#   data/keywords/. Each file contains 500+ keyword phrases with importance
+#   scores (KeyBERT-style), split two ways:
+#     - by artifact type : code_comment, issue, commit, pull_request
+#     - by SATD category  : C/D, DOC, TES, REQ
+#
+# Planned approach:
+#   1. Parse each keyword file — keep top 100 per file, drop punctuation-only
+#      entries and empty tuples.
+#   2. Normalize each file's scores to 0-1 range (score / max score in file).
+#   3. For each text row, compute 8 weighted scores (one per keyword list)
+#      by summing normalized scores of all keyword phrases found in the text
+#      using word-boundary regex matching.
+#   4. Add a 9th column: kw_total_signal (sum of all 8 scores).
+#   5. Save as keyword_features_{train,val,test}.csv and .npy files,
+#      aligned row-for-row with the Phase 3 splits.
+#
+# Keyword files (in data/keywords/):
+#   Keywords_for_code_comments.txt
+#   Keywords_for_issues.txt
+#   Keywords_for_commit_messages.txt
+#   Keywords_for_pull_requests.txt
+#   Keywords_for_code_or_design_debt.txt
+#   Keywords_for_documentation_debt.txt
+#   Keywords_for_test_debt.txt
+#   Keywords_for_requirement_debt.txt
+# -----------------------------------------------------------------------------
+ 
+ 
+# -----------------------------------------------------------------------------
+# FUTURE PHASE 9 — RETRAIN WITH KEYWORD FEATURES COMBINED
+# -----------------------------------------------------------------------------
+# Motivation:
+#   Evaluate whether the 9 keyword signal features (from Phase 8) improve
+#   classifier performance when concatenated onto the embedding vectors,
+#   holding everything else constant.
+#
+# Planned approach:
+#   1. Load embedding arrays (Qwen3, E5) and keyword feature arrays (Phase 8).
+#   2. Concatenate: new_feature = [embedding_vector | keyword_features]
+#      Shape changes from (n, 1024) to (n, 1033) per model.
+#   3. Retrain XGBoost + Logistic Regression on combined features,
+#      same setup as Phase 5 (32 models: 2 classifiers x 2 embeddings x
+#      4 artifact types x 2 tasks).
+#   4. Compare new macro F1 scores against Phase 5/6 embedding-only baseline
+#      to isolate the keyword contribution.
+# -----------------------------------------------------------------------------
