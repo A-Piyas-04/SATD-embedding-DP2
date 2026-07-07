@@ -5,7 +5,7 @@
 All processed data files, embeddings, and trained models are hosted on Google Drive
 due to file size limits. Raw source files are also included there.
 
-**[SATD Project — Data and Models](PASTE_YOUR_DRIVE_LINK_HERE)**
+**[SATD Project — Data and Models](https://drive.google.com/drive/folders/1E-jzrNGE2NyKEsrI8Ud9Phk3gx_8a2dD?usp=sharing)**
 
 ### Folder structure on Drive
 

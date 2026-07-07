@@ -85,7 +85,7 @@ reference study.
 
 Large files (embeddings, processed CSVs, trained models) are on Google Drive:
 
-**[SATD Project — Data and Models](PASTE_YOUR_DRIVE_LINK_HERE)**
+**[SATD Project — Data and Models](https://drive.google.com/drive/folders/1E-jzrNGE2NyKEsrI8Ud9Phk3gx_8a2dD?usp=sharing)**
 
 ```
 SATD Project - Data & Models/
