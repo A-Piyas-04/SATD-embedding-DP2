@@ -61,6 +61,38 @@ satd-embedding-comparison/
 | Categorization (C/D, DOC, TES, REQ) | Embeddings match or beat BERT for 3 of 4 artifact types |
 | Classifier comparison | XGBoost beats Logistic Regression in every single comparison (32/32) |
 
+### Best overall result
+
+**Qwen3 + XGBoost** achieved the best performance when averaged across all
+artifact types and both tasks: **macro F1 = 0.8648**.
+
+### Identification task (SATD vs. Not-SATD)
+
+Our embedding approach underperformed the paper's BiLSTM baseline in every case.
+
+| Metric | Ours | Paper (BiLSTM) |
+|---|---|---|
+| Best artifact type | Code comments (0.915) | Code comments (0.939) |
+
+### Categorization task (SATD type)
+
+For **3 out of 4** artifact types, our embeddings (E5/Qwen3 + XGBoost) beat the
+paper's fine-tuned BERT:
+
+| Artifact | Our best (E5/Qwen3 + XGBoost) | Paper's BERT | Outcome |
+|---|---|---|---|
+| Code comments | 0.904 | 0.882 | Won |
+| Issues | 0.941 | 0.899 | Won |
+| Pull requests | 0.936 | 0.876 | Won |
+| Commit messages | 0.959 | 0.980 | Lost |
+
+### Headline finding
+
+> Frozen LLM embeddings + XGBoost cannot beat a purpose-trained BiLSTM for
+> detecting SATD, but they outperform fine-tuned BERT for categorizing SATD types
+> in 3 out of 4 artifact types — at far lower computational cost, since no
+> fine-tuning is required.
+
 Full results by artifact type are in `results/`. A summary PDF is at
 `results/SATD_Findings_Summary.pdf`.
 
