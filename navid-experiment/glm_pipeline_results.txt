@@ -1,0 +1,65 @@
+======================================================================
+IDENTIFICATION TASK COMPARISON
+======================================================================
+    Artifact Embedding Classifier  Macro F1  vs Baseline
+code_comment  Baseline Paper/Repl    0.9390 — (Baseline)
+code_comment     qwen3    xgboost    0.9664      +0.0274
+code_comment     qwen3     logreg    0.9336      -0.0054
+code_comment        e5    xgboost    0.9587      +0.0197
+code_comment        e5     logreg    0.9139      -0.0251
+       issue  Baseline Paper/Repl    0.8780 — (Baseline)
+       issue     qwen3    xgboost    0.8656      -0.0124
+       issue     qwen3     logreg    0.8381      -0.0399
+       issue        e5    xgboost    0.8632      -0.0148
+       issue        e5     logreg    0.8426      -0.0354
+pull_request  Baseline Paper/Repl    0.8620 — (Baseline)
+pull_request     qwen3    xgboost    0.8642      +0.0022
+pull_request     qwen3     logreg    0.8180      -0.0440
+pull_request        e5    xgboost    0.8703      +0.0083
+pull_request        e5     logreg    0.8312      -0.0308
+      commit  Baseline Paper/Repl    0.9100 — (Baseline)
+      commit     qwen3    xgboost    0.8917      -0.0183
+      commit     qwen3     logreg    0.8357      -0.0743
+      commit        e5    xgboost    0.8817      -0.0283
+      commit        e5     logreg    0.8374      -0.0726
+
+======================================================================
+CATEGORIZATION TASK COMPARISON
+======================================================================
+    Artifact Embedding Classifier  Macro F1  vs Baseline
+code_comment  Baseline Paper/Repl    0.8820 — (Baseline)
+code_comment     qwen3    xgboost    0.9470      +0.0650
+code_comment     qwen3     logreg    0.8694      -0.0126
+code_comment        e5    xgboost    0.9581      +0.0761
+code_comment        e5     logreg    0.8638      -0.0182
+       issue  Baseline Paper/Repl    0.8990 — (Baseline)
+       issue     qwen3    xgboost    0.9442      +0.0452
+       issue     qwen3     logreg    0.8748      -0.0242
+       issue        e5    xgboost    0.9503      +0.0513
+       issue        e5     logreg    0.8790      -0.0200
+pull_request  Baseline Paper/Repl    0.8760 — (Baseline)
+pull_request     qwen3    xgboost    0.9548      +0.0788
+pull_request     qwen3     logreg    0.8578      -0.0182
+pull_request        e5    xgboost    0.9335      +0.0575
+pull_request        e5     logreg    0.9242      +0.0482
+      commit  Baseline Paper/Repl    0.9800 — (Baseline)
+      commit     qwen3    xgboost    0.9639      -0.0161
+      commit     qwen3     logreg    0.8996      -0.0804
+      commit        e5    xgboost    0.9487      -0.0313
+      commit        e5     logreg    0.9240      -0.0560
+
+======================================================================
+BEST EMBEDDING MODEL (Averaged across all artifacts & tasks)
+======================================================================
+embedding
+e5       0.8988
+qwen3    0.8953
+Name: macro_f1, dtype: float64
+
+BEST OVERALL COMBINATION:
+embedding  classifier
+qwen3      xgboost       0.9247
+e5         xgboost       0.9206
+           logreg        0.8770
+qwen3      logreg        0.8659
+Name: macro_f1, dtype: float64
