@@ -15,22 +15,56 @@ This repository compares modern embedding models (**Qwen3-Embedding-0.6B**, **E5
 
 ## Findings
 
-Pipeline A and Pipeline B must **not** be averaged into a single headline score. They use different corpora and augmentation policies.
+Scores are **macro F1** on a held-out test set (higher is better). Two jobs are measured separately:
 
-**Stable across both pipelines**
+| Job | Question the model answers |
+|---|---|
+| **Identification** | Is this text SATD or not? (compared to the paper’s **BiLSTM**) |
+| **Categorization** | If it is SATD, which type? C/D, requirement, test, or documentation (compared to the paper’s **BERT**) |
 
-- Frozen embeddings + XGBoost outperform fine-tuned BERT on SATD **categorization** for code comments, issues, and pull requests.
-- Commit-message categorization remains below the BERT baseline (supervisor replication: 0.9804).
-- XGBoost outperforms logistic regression in every comparison that was recorded.
+We ran the same embedding + classifier recipe twice, on **different data recipes**. Those two runs are not interchangeable: do not average them into one “our F1.”
 
-**Sensitive to data protocol**
+| | Pipeline A | Pipeline B |
+|---|---|---|
+| **What we trained on** | 31 SATD sources merged, then T5 paraphrases so all five labels (including Not-SATD) have similar counts | The paper’s four AugGPT files; Not-SATD stays the majority (~65–82%) |
+| **What that means in practice** | The mix of sources and class balance is **not** the paper’s training distribution | Closer to how the baseline numbers were produced |
 
-- **Pipeline A** (31-source rebuild, T5 class equalization): identification loses to BiLSTM on all four artifacts. Best overall average on this protocol: Qwen3 + XGBoost, macro F1 **0.8648**.
-- **Pipeline B** (paper AugGPT files, Not-SATD majority retained): identification is competitive—Qwen3 beats BiLSTM on comments (0.9664 vs 0.939); E5 beats it on pull requests (0.8703 vs 0.862). Best combined average with XGBoost: BGE-M3 **0.9261**, Qwen3 **~0.9248**, E5 **0.9206**.
+XGBoost beat logistic regression in every recorded pair. Tables below use the **XGBoost** head (the stronger, cheaper recipe). Commit identification/categorization baselines marked with \* are the **supervisor replication** (BiLSTM 0.91, BERT 0.9804), not necessarily the published paper row.
 
-Classifier choice matters more than swapping among the three frozen encoders. The largest identification shift is Pipeline A versus Pipeline B, not encoder size.
+### Identification (SATD vs not)
 
-Full tables, caveats, and research questions: [docs/SATD_Research_Progress.md](docs/SATD_Research_Progress.md).
+On Pipeline A, frozen embeddings **never** beat BiLSTM. The worst drop is commits (−0.16). On Pipeline B, the same stack is **close or better** on comments and pull requests; issues and commits stay slightly below BiLSTM.
+
+| Artifact | BiLSTM baseline | A — best of Qwen3/E5 | B — Qwen3 | B — E5 | B — BGE-M3 |
+|---|---:|---:|---:|---:|---:|
+| Code comments | 0.939 | 0.915 (Qwen3) | **0.966** | 0.959 | 0.959 |
+| Issues | 0.878 | 0.798 (Qwen3) | 0.866 | 0.863 | 0.853 |
+| Pull requests | 0.862 | 0.792 (Qwen3) | 0.864 | **0.870** | 0.858 |
+| Commits | 0.910\* | 0.751 (E5) | 0.892 | 0.882 | 0.901 |
+
+**Read this as:** “Can we detect SATD at all?” depends more on **how the dataset was built** than on which of Qwen3 / E5 / BGE we pick. Equalizing Not-SATD with T5 (Pipeline A) hurts identification; keeping the paper’s Not-SATD majority (Pipeline B) largely recovers it.
+
+### Categorization (SATD type)
+
+This result is **stable**. Frozen embeddings + XGBoost beat BERT on comments, issues, and pull requests in **both** pipelines. Commits are the exception: BERT stays ahead.
+
+| Artifact | BERT baseline | A — best of Qwen3/E5 | B — Qwen3 | B — E5 | B — BGE-M3 |
+|---|---:|---:|---:|---:|---:|
+| Code comments | 0.882 | **0.904** (E5) | 0.947 | 0.958 | 0.956 |
+| Issues | 0.899 | **0.941** (Qwen3) | 0.944 | 0.950 | **0.956** |
+| Pull requests | 0.876 | **0.936** (E5) | 0.955 | 0.934 | **0.964** |
+| Commits | 0.980\* | 0.959 (Qwen3) | 0.964 | 0.949 | 0.960 |
+
+Pipeline B margins over BERT are larger than Pipeline A (e.g. pull requests: BGE-M3 **0.964** vs BERT **0.876**). No encoder we tested reaches the 0.980 commit BERT number.
+
+### What to take away
+
+1. **Typing SATD** (C/D vs REQ vs TES vs DOC) is where frozen embeddings shine: cheaper than fine-tuning BERT, and stronger on three of four artifacts.
+2. **Finding SATD vs ordinary text** is not a property of the encoder alone. It tracks the data protocol. Pipeline B identification averages with XGBoost sit together (Qwen3 0.897, E5 0.894, BGE-M3 0.893).
+3. **XGBoost vs logistic regression** is a bigger lever than swapping Qwen3, E5, or BGE-M3 on the same data. BGE-M3 + logistic regression is much weaker (combined ~0.85) than BGE-M3 + XGBoost (**0.926** across both jobs on Pipeline B).
+4. Headline averages (only useful **inside** one pipeline): Pipeline A Qwen3+XGB **0.8648**; Pipeline B XGBoost combined BGE-M3 **0.9261**, Qwen3 **~0.9248**, E5 **0.9206**.
+
+Limitations (split-after-paraphrase leakage in A, AugGPT files inside the 31-source merge, missing BGE training notebook) are in [docs/SATD_Research_Progress.md](docs/SATD_Research_Progress.md).
 
 ---
 
