@@ -66,5 +66,5 @@ Each file lists keyword phrases with importance scores in descending order:
 0.026151 -> ('defer', 'argument', 'checking')
 ```
 
-See `docs/pipeline_overview.md` (Future Phase 8 section) for the planned
-feature extraction approach using these files.
+See [`docs/pipeline_a_from_scratch.md`](../docs/pipeline_a_from_scratch.md) (Future Phase 8)
+for the planned feature extraction approach using these files.

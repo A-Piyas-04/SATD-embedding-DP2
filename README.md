@@ -84,6 +84,11 @@ Full results by artifact type are in `results/`. A summary PDF is at
 
 ## Pipeline
 
+There are **two** experiments. Phase table below is **Pipeline A** (from-scratch). Pipeline B uses the paper’s four AugGPT files (no T5 five-class balance) and later BGE-M3.
+
+- [Pipeline A — from-scratch](docs/pipeline_a_from_scratch.md)
+- [Pipeline B — paper data](docs/pipeline_b_paper_data.md)
+
 | Phase | Description | Status |
 |---|---|---|
 | 1 — Clean | Merge 31 sources, tag artifact types, standardize labels | Done |
@@ -153,8 +158,9 @@ satd-embedding-comparison/
 │   ├── phase6_categorization_comparison.csv
 │   └── SATD_Findings_Summary.pdf
 ├── docs/
-│   ├── pipeline_overview.md      phase-by-phase technical overview
-│   └── teammate_guide.md         how to replicate the full pipeline
+│   ├── pipeline_a_from_scratch.md  Pipeline A (31 sources, T5, Phases 1–6)
+│   ├── pipeline_b_paper_data.md    Pipeline B (paper AugGPT files + BGE)
+│   └── thesis_research_narrative.md
 ├── requirements.txt
 └── README.md
 ```
@@ -185,8 +191,8 @@ Internet ON, HF_TOKEN set as a Kaggle Secret).
 ## Future work
 
 Three extensions are planned. Input files for Phase 8 are already prepared
-in `data/keywords/`. See [`docs/pipeline_overview.md`](docs/pipeline_overview.md) for full technical details
-on each.
+in `data/keywords/`. See [`docs/pipeline_a_from_scratch.md`](docs/pipeline_a_from_scratch.md) (future phases)
+and [`docs/pipeline_b_paper_data.md`](docs/pipeline_b_paper_data.md) for the two completed pipelines.
 
 | Phase | Description |
 |---|---|
