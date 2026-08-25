@@ -1,217 +1,137 @@
 # SATD Embedding Comparison
 
-Comparing modern LLM embedding models (Qwen3-Embedding, E5-Large) against the
-BiLSTM/BERT pipeline from Sutoyo et al. (2024) for detecting and categorizing
-Self-Admitted Technical Debt (SATD) across four software artifact types.
+Frozen text embeddings for **identifying** and **categorizing** Self-Admitted Technical Debt (SATD) in four software artifacts: code comments, issues, commit messages, and pull requests.
 
-**Reference paper:**  
-Sutoyo, E., Avgeriou, P., & Capiluppi, A. (2024).  
-*Deep Learning and Data Augmentation for Detecting Self-Admitted Technical Debt.*  
-[arXiv:2410.15804](https://arxiv.org/abs/2410.15804)
+This repository compares modern embedding models (**Qwen3-Embedding-0.6B**, **E5-Large-v2**, **BGE-M3**) with XGBoost or logistic regression against the BiLSTM / BERT + AugGPT setup of Sutoyo, Avgeriou, and Capiluppi (2024). Two data protocols are evaluated so architectural effects can be distinguished from distribution effects.
 
----
-
-> ### Download data & trained models
->
-> Embeddings, processed CSVs, raw sources, and trained classifiers are **not stored
-> in this repository** due to file size. Download everything from Google Drive:
->
-> ## [SATD Project — Data and Models (Google Drive)](https://drive.google.com/drive/folders/1E-jzrNGE2NyKEsrI8Ud9Phk3gx_8a2dD?usp=sharing)
->
-> Direct link: `https://drive.google.com/drive/folders/1E-jzrNGE2NyKEsrI8Ud9Phk3gx_8a2dD?usp=sharing`
-
----
-
-## Table of contents
-
-- [Key results](#key-results)
-- [Pipeline](#pipeline)
-- [Label scheme](#label-scheme)
-- [Data and models](#data-and-models)
-- [Repository structure](#repository-structure)
-- [How to run](#how-to-run)
-- [Future work](#future-work)
-- [Requirements](#requirements)
-
----
-
-## Key results
-
-**Best overall combination: Qwen3-Embedding + XGBoost (avg macro F1 = 0.8648)**
-
-| Task | Finding |
+| | |
 |---|---|
-| Identification (SATD vs Not-SATD) | Embeddings underperform BiLSTM baseline across all artifact types |
-| Categorization (C/D, DOC, TES, REQ) | Embeddings match or beat BERT for 3 of 4 artifact types |
-| Classifier comparison | XGBoost beats Logistic Regression in every single comparison (32/32) |
-
-### Best overall result
-
-**Qwen3 + XGBoost** achieved the best performance when averaged across all
-artifact types and both tasks: **macro F1 = 0.8648**.
-
-### Identification task (SATD vs. Not-SATD)
-
-Our embedding approach underperformed the paper's BiLSTM baseline in every case.
-
-| Metric | Ours | Paper (BiLSTM) |
-|---|---|---|
-| Best artifact type | Code comments (0.915) | Code comments (0.939) |
-
-### Categorization task (SATD type)
-
-For **3 out of 4** artifact types, our embeddings (E5/Qwen3 + XGBoost) beat the
-paper's fine-tuned BERT:
-
-| Artifact | Our best (E5/Qwen3 + XGBoost) | Paper's BERT | Outcome |
-|---|---|---|---|
-| Code comments | 0.904 | 0.882 | Won |
-| Issues | 0.941 | 0.899 | Won |
-| Pull requests | 0.936 | 0.876 | Won |
-| Commit messages | 0.959 | 0.980 | Lost |
-
-### Headline finding
-
-> Frozen LLM embeddings + XGBoost cannot beat a purpose-trained BiLSTM for
-> detecting SATD, but they outperform fine-tuned BERT for categorizing SATD types
-> in 3 out of 4 artifact types — at far lower computational cost, since no
-> fine-tuning is required.
-
-Full results by artifact type are in `results/`. A summary PDF is at
-`results/SATD_Findings_Summary.pdf`.
+| **Baseline paper** | Sutoyo, E., Avgeriou, P., & Capiluppi, A. (2024). *Deep Learning and Data Augmentation for Detecting Self-Admitted Technical Debt.* [arXiv:2410.15804](https://arxiv.org/abs/2410.15804) |
+| **Progress report** | [docs/SATD_Research_Progress.md](docs/SATD_Research_Progress.md) |
+| **Data and models** | [Google Drive](https://drive.google.com/drive/folders/1E-jzrNGE2NyKEsrI8Ud9Phk3gx_8a2dD?usp=sharing) |
+| **Repository** | [A-Piyas-04/SATD-embedding-DP2](https://github.com/A-Piyas-04/SATD-embedding-DP2) |
 
 ---
 
-## Pipeline
+## Findings
 
-There are **two** experiments. Phase table below is **Pipeline A** (from-scratch). Pipeline B uses the paper’s four AugGPT files (no T5 five-class balance) and later BGE-M3.
+Pipeline A and Pipeline B must **not** be averaged into a single headline score. They use different corpora and augmentation policies.
 
-- [Pipeline A — from-scratch](docs/pipeline_a_from_scratch.md)
-- [Pipeline B — paper data](docs/pipeline_b_paper_data.md)
+**Stable across both pipelines**
 
-| Phase | Description | Status |
-|---|---|---|
-| 1 — Clean | Merge 31 sources, tag artifact types, standardize labels | Done |
-| 2 — Balance | Downsample Not-SATD, augment minority SATD classes (T5 paraphraser) | Done |
-| 3 — Split | Stratified 80/10/10 train/val/test split (seed=42) | Done |
-| 4 — Embed | Generate Qwen3-Embedding-0.6B and E5-Large-v2 vectors | Done |
-| 5 — Train | XGBoost + Logistic Regression on each embedding (32 models total) | Done |
-| 6 — Compare | Compare vs. paper's BiLSTM+AugGPT / BERT+AugGPT baseline | Done |
-| 7 — Code embeddings | Evaluate CodeBERT, GraphCodeBERT, UniXcoder, CodeT5 | Future work |
-| 8 — Keywords | Add weighted SATD keyword signal features | Future work |
-| 9 — Retrain | Retrain classifiers with keywords concatenated to embeddings | Future work |
+- Frozen embeddings + XGBoost outperform fine-tuned BERT on SATD **categorization** for code comments, issues, and pull requests.
+- Commit-message categorization remains below the BERT baseline (supervisor replication: 0.9804).
+- XGBoost outperforms logistic regression in every comparison that was recorded.
+
+**Sensitive to data protocol**
+
+- **Pipeline A** (31-source rebuild, T5 class equalization): identification loses to BiLSTM on all four artifacts. Best overall average on this protocol: Qwen3 + XGBoost, macro F1 **0.8648**.
+- **Pipeline B** (paper AugGPT files, Not-SATD majority retained): identification is competitive—Qwen3 beats BiLSTM on comments (0.9664 vs 0.939); E5 beats it on pull requests (0.8703 vs 0.862). Best combined average with XGBoost: BGE-M3 **0.9261**, Qwen3 **~0.9248**, E5 **0.9206**.
+
+Classifier choice matters more than swapping among the three frozen encoders. The largest identification shift is Pipeline A versus Pipeline B, not encoder size.
+
+Full tables, caveats, and research questions: [docs/SATD_Research_Progress.md](docs/SATD_Research_Progress.md).
 
 ---
 
-## Label scheme
+## Experimental design
 
-| Label | Meaning |
-|---|---|
-| Not-SATD | Not technical debt |
-| C/D | Code or design debt |
-| REQ | Requirement debt |
-| TES | Test debt |
-| DOC | Documentation debt |
+| | Identification | Categorization |
+|---|---|---|
+| **Task** | SATD vs Not-SATD | C/D, REQ, TES, DOC (SATD rows only) |
+| **Baseline** | GloVe + BiLSTM + AugGPT | Fine-tuned BERT + AugGPT |
+| **This work** | Frozen embeddings + XGBoost / logistic regression | Same |
 
-Defect, Architecture, and Build debt labels were excluded — not used in the
-reference study.
+Models are trained **separately per artifact**. The primary metric is **macro F1** on a held-out test set. Encoders are frozen (mean-pooled, L2-normalized); no BERT or BiLSTM fine-tuning is performed here.
+
+**Labels:** Not-SATD, C/D (code or design), REQ, TES, DOC. Defect, Architecture, and Build labels are excluded, matching the reference study.
+
+---
+
+## Pipelines
+
+| Pipeline | Data | Status |
+|---|---|---|
+| **[A — from-scratch](docs/pipeline_a_from_scratch.md)** | Merge of 31 sources, T5 paraphrasing to equalize five classes, split after augmentation | Phases 1–6 complete |
+| **[B — paper data](docs/pipeline_b_paper_data.md)** | Four AugGPT CSVs from the paper; Not-SATD majority kept; split before extra augmentation | Qwen3, E5, and BGE-M3 complete |
+
+Pipeline A includes the paper’s own `data-augmentation-*` files among the 31 sources. It is a multi-source rebuild, not a raw-only corpus. Splitting after paraphrasing is a leakage risk (synthetic siblings across splits).
 
 ---
 
 ## Data and models
 
-Large files (embeddings, processed CSVs, trained models) are hosted on Google Drive.
+Embeddings, processed CSVs, and trained classifiers are not stored in git. Download them from:
 
-| | |
-|---|---|
-| **Google Drive folder** | **[SATD Project — Data and Models](https://drive.google.com/drive/folders/1E-jzrNGE2NyKEsrI8Ud9Phk3gx_8a2dD?usp=sharing)** |
-| **Direct URL** | `https://drive.google.com/drive/folders/1E-jzrNGE2NyKEsrI8Ud9Phk3gx_8a2dD?usp=sharing` |
+**[SATD Project — Data and Models (Google Drive)](https://drive.google.com/drive/folders/1E-jzrNGE2NyKEsrI8Ud9Phk3gx_8a2dD?usp=sharing)**
 
-See also [`data/README.md`](data/README.md) for a detailed file-by-file breakdown.
-
-### Folder structure on Drive
+File inventory: [`data/README.md`](data/README.md).
 
 ```
 SATD Project - Data & Models/
 ├── 01_raw_sources/        original 31 source files (zipped)
-├── 02_processed_data/     satd_with_artifact_type.csv, satd_balanced.csv,
-│                          satd_train/val/test.csv, label CSVs
-├── 03_embeddings/         qwen3_*.npy, e5_*.npy (shape: n x 1024 each)
-└── 04_trained_models/     32 trained classifier .joblib files
+├── 02_processed_data/     cleaned, balanced, and split CSVs
+├── 03_embeddings/         qwen3_*.npy, e5_*.npy
+└── 04_trained_models/     classifier .joblib files
 ```
 
 ---
 
-## Repository structure
+## Repository layout
 
 ```
 satd-embedding-comparison/
-├── notebooks/
-│   └── full_pipeline.ipynb       full pipeline — Phases 1 through 6
-├── scripts/                      standalone .py version of each phase
-├── data/
-│   ├── keywords/                 8 scored SATD keyword files (for future Phase 8)
-│   └── README.md                 links to Google Drive for large data files
-├── results/
-│   ├── phase5_results_summary.csv
-│   ├── phase6_identification_comparison.csv
-│   ├── phase6_categorization_comparison.csv
-│   └── SATD_Findings_Summary.pdf
+├── notebooks/full_pipeline.ipynb    Pipeline A, phases 1–6
+├── navid-experiment/                Pipeline B notebook and reports
+├── scripts/                         standalone scripts for each phase
+├── data/keywords/                   KeyBERT SATD keyword lists (unused in reported models)
+├── results/                         Pipeline A phase 5/6 CSVs and summary PDF
 ├── docs/
-│   ├── pipeline_a_from_scratch.md  Pipeline A (31 sources, T5, Phases 1–6)
-│   ├── pipeline_b_paper_data.md    Pipeline B (paper AugGPT files + BGE)
+│   ├── SATD_Research_Progress.md    progress report (Markdown)
+│   ├── SATD_Research_Progress.pdf   same report (PDF)
+│   ├── pipeline_a_from_scratch.md
+│   ├── pipeline_b_paper_data.md
 │   └── thesis_research_narrative.md
-├── requirements.txt
-└── README.md
+└── requirements.txt
 ```
 
 ---
 
-## How to run
-
-See [`docs/teammate_guide.md`](docs/teammate_guide.md) for full setup and re-run instructions.
-
-**Quick start:**
+## Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/satd-embedding-comparison.git
-cd satd-embedding-comparison
+git clone https://github.com/A-Piyas-04/SATD-embedding-DP2.git
+cd SATD-embedding-DP2
 pip install -r requirements.txt
 ```
 
-Then open `notebooks/full_pipeline.ipynb` on Kaggle (GPU T4 x2 recommended,
-Internet ON, HF_TOKEN set as a Kaggle Secret).
+Place Drive downloads on the paths expected by the notebooks. GPU (CUDA) is required for embedding generation and Pipeline A paraphrasing; classifier training runs on CPU.
 
-> **Before running:** download the data files from
-> **[Google Drive](https://drive.google.com/drive/folders/1E-jzrNGE2NyKEsrI8Ud9Phk3gx_8a2dD?usp=sharing)**
-> and place them in the paths expected by the notebook.
-
----
-
-## Future work
-
-Three extensions are planned. Input files for Phase 8 are already prepared
-in `data/keywords/`. See [`docs/pipeline_a_from_scratch.md`](docs/pipeline_a_from_scratch.md) (future phases)
-and [`docs/pipeline_b_paper_data.md`](docs/pipeline_b_paper_data.md) for the two completed pipelines.
-
-| Phase | Description |
+| Dependency | Version |
 |---|---|
-| **7 — Code-specific embedding models** | Evaluate CodeBERT, GraphCodeBERT, UniXcoder, and CodeT5 as drop-in replacements for Qwen3/E5, using the same classifier and evaluation setup. Code-specific pre-training may improve SATD detection in code comments and commit messages. |
-| **8 — SATD keyword signal features** | Build 9 weighted numeric features from 8 scored SATD keyword lists (stored in `data/keywords/`), capturing how strongly each text matches known SATD patterns by artifact type and debt category. Feature vectors are then concatenated onto the embedding arrays before classifier training. |
-| **9 — Combined embedding + keyword retraining** | Retrain XGBoost and Logistic Regression on the combined feature vectors (embedding + keyword features) and compare against the Phase 5/6 baseline to measure the isolated contribution of keyword signal on top of embeddings. |
+| pandas | ≥ 2.0 |
+| numpy | ≥ 1.24 |
+| scikit-learn | ≥ 1.3 |
+| xgboost | ≥ 2.0 |
+| transformers | ≥ 4.40 |
+| torch | ≥ 2.0 |
+| joblib | ≥ 1.3 |
 
 ---
 
-## Requirements
+## Documentation
 
-```
-pandas>=2.0.0
-numpy>=1.24.0
-scikit-learn>=1.3.0
-xgboost>=2.0.0
-transformers>=4.40.0
-torch>=2.0.0
-joblib>=1.3.0
-```
+| Document | Purpose |
+|---|---|
+| [SATD_Research_Progress.md](docs/SATD_Research_Progress.md) | Problem, RQs, chronology, both pipelines, limitations |
+| [pipeline_a_from_scratch.md](docs/pipeline_a_from_scratch.md) | Pipeline A methods and phases |
+| [pipeline_b_paper_data.md](docs/pipeline_b_paper_data.md) | Pipeline B methods |
+| [thesis_research_narrative.md](docs/thesis_research_narrative.md) | Longer narrative reconstructed from the repo |
+| [navid-experiment/satd_report.md](navid-experiment/satd_report.md) | Pipeline B Qwen3 / E5 report |
+| [navid-experiment/satd_report_bge.md](navid-experiment/satd_report_bge.md) | Pipeline B BGE-M3 report |
 
-GPU (CUDA) required for Phases 2 and 4. All other phases run on CPU.
+---
+
+## Planned work
+
+Keyword-feature phases (7–9: code-specific encoders, keyword signals, combined retraining) remain future work. Keyword lists are already in `data/keywords/`. Broader thesis directions include SATD in Agile practice and links between SATD, developer emotion, and issue resolution time.
