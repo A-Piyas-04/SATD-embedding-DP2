@@ -3,6 +3,8 @@
 *.csv
 *.joblib
 *.pkl
+*.parquet
+*.zip
 data/raw/
 models/
 
