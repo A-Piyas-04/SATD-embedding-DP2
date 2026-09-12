@@ -11,3 +11,5 @@ models/
 # Exceptions — keep results CSVs and keyword txt files
 !results/*.csv
 !data/keywords/*.txt
+!Demo/models/
+!Demo/models/README.md
