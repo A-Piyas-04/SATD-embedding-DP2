@@ -1,114 +1,62 @@
-# Musaddiq Rafi - SATD Classification Task
+# Musaddiq Rafi — SATD Classification on New Issue Data (V2, executed)
 
-## What Was Told to Do
-
-From the team chat (28/08/2026 - 07/09/2026):
+## Task (from team chat, 28/08/2026 – 07/09/2026)
 
 1. Download the provided file from Google Drive (3 columns: `ID`, `Title`, `Description`)
-2. Run the trained model on **3 variations**:
-   - Title only
-   - Description only
-   - Title + Description
-3. **For SATD Identification:** Use the baseline model (best output so far)
-4. **For SATD Categorization:** Use our trained model
-5. **Use Pipeline A** (uses more dataset than authors only)
-6. **Output:** Parquet file with columns:
-   - `ID`, `Title`, `Description`, `Title_SATD`, `Description_SATD`, `Title_Description_SATD`
-7. **SATD Categories:** Not-SATD, C/D, TEST, Requirement, DOC
+2. Run the trained model on **3 variations**: Title only · Description only · Title + Description
+3. **Identification:** baseline/best model so far · **Categorization:** our trained model
+4. **Use Pipeline A** (broader than the authors' data alone)
+5. **Output:** Parquet with `ID, Title, Description, Title_SATD, Description_SATD, Title_Description_SATD`
+6. **Categories:** Not-SATD, C/D, TEST, Requirement, DOC
 
-## What We Are Doing
+## What was actually run
 
-We are using the trained Pipeline A models (Qwen3-Embedding + XGBoost) to classify SATD in the provided issue data. The pipeline follows a **two-step classification**:
+**Notebook:** [`satd-classifications-optimized V2.ipynb`](satd-classifications-optimized%20V2.ipynb) — optimized rewrite of `satd-classifications-on-new-issue-data.ipynb`, **executed end-to-end on Kaggle (2× Tesla T4)**.
 
-1. **Identification** - Is this SATD or Not-SATD? (binary classification)
-2. **Categorization** - If SATD, what type? (C/D, REQ, TES, DOC - 4-class classification)
+| Item | Detail |
+|---|---|
+| Input | `issue_202608272234.parquet` — **458,232 rows** ([Download](https://drive.google.com/file/d/1e9ZiR2VOglBilEEnJIfSWA_UkNudjEym/view?usp=sharing)) |
+| Encoder | `Qwen/Qwen3-Embedding-0.6B`, frozen, FP16, `max_seq_length=256`, `normalize_embeddings=True` |
+| Heads | `identification_issue_qwen3_xgboost.joblib` (F1 0.798) → `categorization_issue_qwen3_xgboost.joblib` (F1 0.941), both Pipeline A |
+| Parallelism | One worker per GPU, interleaved shards, length-sorted batching (`batch_size=128`), classify-and-discard per batch |
+| Checkpoints | Per-shard Parquet in `shards/`, streamed logs in `logs/`, 4k-row benchmark before the full run |
+| Output | `satd_classification_results.parquet` — **458,232 / 458,232 rows (100%)** ([Download](https://drive.google.com/file/d/1BTzQmgwanxi5YdCh4zQUGOf1XT5CR5g-/view?usp=drive_link)) |
 
-### Models Used
-- **Embedding:** Qwen3-Embedding-0.6B (frozen encoder)
-- **Classifier:** XGBoost (best performer from Pipeline A)
-- **Best F1 Scores for Issues:**
-  - Identification: 0.798
-  - Categorization: 0.941
+## Results (from the executed summary cells)
+
+| View | `0` (Not-SATD) | `1` (SATD) | SATD rate |
+|---|---|---:|---:|
+| `Title_SATD` | 283,019 | 175,213 | 38.2% |
+| `Description_SATD` | 188,418 | 269,814 | 58.9% |
+| `Title_Description_SATD` | 205,454 | 252,778 | 55.2% |
+
+> **Encoding note:** the executed notebook prints binary `0/1`, not the `Not-SATD / C/D / REQ / TES / DOC` strings in the original spec. Treat `1` = SATD, `0` = Not-SATD for this artifact. The notebook's own `SATD total = (col != "Not-SATD").sum()` line overcounts because of this — use the table above. Check dtypes in the downloaded Parquet before citing per-type breakdowns.
+
+Input text profile: titles ~58 chars mean; descriptions ~929 chars mean with a heavy tail (max ~1.39M chars); 29,128 missing descriptions (~6.4%, filled with `""`); **16.3% of descriptions exceed the 256-token cap and were truncated**.
 
 ## Files
 
 | File | Description |
 |------|-------------|
-| `satd_classification.ipynb` | Notebook to run classification |
-| `models/` | 32 trained .joblib classifier files |
+| `satd-classifications-optimized V2.ipynb` | Executed V2 notebook (benchmark → full run → merge → summary) |
+| `models/` | 32 trained `.joblib` heads (mirrored from `04_trained_models/`) |
+| `issue_202608272234.parquet` | Local copy of the input (if present; otherwise use the Drive link above) |
 | `README.md` | This file |
 
-### Input Data (Not in Git)
+Full analysis, charts, and reuse guide: [`../docs/satd_new_issue_inference_v2.md`](../docs/satd_new_issue_inference_v2.md) and [`SATD_New_Issue_Inference_V2_Report.pdf`](SATD_New_Issue_Inference_V2_Report.pdf).
 
-The input parquet file is not in the repository due to size. Download from:
+## How to re-run (Kaggle)
 
-**[Download issue_202608272234.parquet](https://drive.google.com/file/d/1e9ZiR2VOglBilEEnJIfSWA_UkNudjEym/view?usp=sharing)**
-
-- 458,232 rows
-- Columns: `ID`, `Title`, `Description`
-
-## How to Run (Kaggle)
-
-### Step 1: Upload Datasets
-
-1. Go to Kaggle → Datasets → New Dataset
-2. Upload `issue_202608272234.parquet` as a dataset
-3. Upload the `models/` folder as another dataset
-
-### Step 2: Create Notebook
-
-1. Create a new notebook on Kaggle
-2. Add both datasets to the notebook:
-   - Click "Add data" → Search for your uploaded datasets
-3. Update the paths in the notebook:
-
-```python
-INPUT_PATH = "/kaggle/input/your-parquet-dataset-name/issue_202608272234.parquet"
-MODEL_DIR = "/kaggle/input/your-models-dataset-name/models"
-```
-
-### Step 3: Run All Cells
-
-The notebook will:
-1. Load the input data (458,232 rows)
-2. Load Qwen3 embedding model from HuggingFace
-3. Generate embeddings for Title, Description, and Title+Description
-4. Run classification (Identification → Categorization)
-5. Save results
-
-### Step 4: Save Results
-
-Results are saved to:
-```
-/kaggle/working/satd_classification_results.parquet
-```
-
-Download from Kaggle → Output → Click download button.
-
-## Output Format
-
-The output parquet file contains:
-
-| Column | Description |
-|--------|-------------|
-| `ID` | Issue ID |
-| `Title` | Original title text |
-| `Description` | Original description text |
-| `Title_SATD` | SATD classification for Title |
-| `Description_SATD` | SATD classification for Description |
-| `Title_Description_SATD` | SATD classification for Title+Description |
-
-### SATD Categories
-- `Not-SATD` - Not technical debt
-- `C/D` - Code or Design debt
-- `REQ` - Requirement debt
-- `TES` - Test debt
-- `DOC` - Documentation debt
+1. Settings → Accelerator **GPU T4 x2**, Internet **on**.
+2. Add datasets: `issue_202608272234.parquet` + the `models/` folder.
+3. Update `INPUT_PATH` and `MODEL_DIR` in the config cell.
+4. Run all cells: inspect → pre-download encoder → benchmark → full run → merge → summary.
+5. Download `/kaggle/working/satd_classification_results.parquet` from Output.
 
 ## Status
 
-- [x] Input data uploaded
-- [x] Models downloaded (32 .joblib files)
-- [x] Notebook created
-- [ ] Run on Kaggle
-- [ ] Upload results
+- [x] Input data uploaded (458,232 rows)
+- [x] Models attached (32 `.joblib` files)
+- [x] V2 notebook created **and executed** (2 shards merged, 100% coverage)
+- [x] Results published ([Parquet on Drive](https://drive.google.com/file/d/1BTzQmgwanxi5YdCh4zQUGOf1XT5CR5g-/view?usp=drive_link))
+- [ ] Reconcile `0/1` vs string-label encoding for per-type (C/D, REQ, TES, DOC) analysis
