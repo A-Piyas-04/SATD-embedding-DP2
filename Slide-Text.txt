@@ -12,7 +12,7 @@ Team:
 [Your Name 2 - ID] - Pipeline B + BGE-M3, comparison reports
 [Your Name 3 - ID] - 458k applied inference, optimized notebooks
 Supervisor: [Supervisor Name]
-Dataset support: [Senior Name]
+Dataset support: Industry member [Industry Member Name]
 GitHub: https://github.com/A-Piyas-04/SATD-embedding-DP2
 
 Say: good morning, we are [names]. Our project finds and types developer-admitted debt with a cheap embedding method, tested two ways and on 458k real issues.
@@ -106,19 +106,23 @@ Heading: Our steps are the same every time - that is why the test is fair
 ============================================================
 SLIDE 10 - Methodology 3: we tried two different data setups
 ============================================================
-Heading: Same steps, two different data setups
+Heading: Same method, two different data sets - so we can see if data matters
 
-- Setup A: we mixed 31 files, about 386k rows, made all 5 groups equal.
-- Setup B: we used only the 4 files from the paper, about 95k rows, kept it like real life where most data is Not-SATD.
-- Setup A has 32 models, Setup B has 32 + 16 more with BGE-M3.
-- We never mix scores of A and B together.
+In simple words: we keep the method same, we only change the data.
+
+- Setup A: we mix all 31 files (about 386k rows) and make each debt type equal amount. Like dividing a cake into equal pieces.
+- Setup B: we use only the 4 files from the paper (about 95k rows) and keep it natural - most is Not-SATD. Like real life.
+- If scores are different, it is because of the data, not because we changed the method.
+- We always show A and B scores separately. Never mix them.
+
+[SCREENSHOT PLACEHOLDER: two boxes side by side - LEFT Box A: 31 files, balanced, 386k | RIGHT Box B: 4 files, natural, 95k - top label: SAME METHOD FOR BOTH]
 
 ============================================================
 SLIDE 11 - Implementation 1: what we built first
 ============================================================
 Heading: From 31 files to 80 models
 
-- Our senior [Senior Name] gave 31 files. We cleaned them: 820k rows became about 386k good rows.
+- An industry member [Industry Member Name] gave us 31 raw files. We cleaned them: 820k rows became about 386k good rows.
 - We split: 59k for training, 7k for checking, 7k for final test.
 - On Drive: raw files, clean files, number files (embeddings), and saved models.
 - We tried 3 models (Qwen3, E5, BGE-M3). XGBoost was best every time.
