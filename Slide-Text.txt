@@ -72,149 +72,152 @@ Heading: Debt is not only in code - it is in understanding and intent
 ============================================================
 SLIDE 7 - Related Works 4: the gap we attack
 ============================================================
-Heading: Nobody tested the same cheap method on two data setups and pushed it to real issues
+Heading: What was still missing
 
-- Old SATD models are strong but heavy: fine-tuned BiLSTM and BERT plus augmentation.
-- Open question: do good scores come from the model or from the augmented data?
-- AI-era debt looks different: more requirement and test debt, less pure design debt.
-- Missing piece: one cheap frozen-embedding recipe, contrasted protocol-vs-protocol, run on 458k real issues with a live tool. That is our work.
-
-============================================================
-SLIDE 8 - Methodology 1: research questions
-============================================================
-Heading: Four questions structure everything we did
-
-- RQ1 Identification: can frozen embeddings + XGBoost match BiLSTM+AugGPT for SATD vs Not-SATD, per artifact?
-- RQ2 Categorization: can the same stack match or beat BERT+AugGPT for C/D, REQ, TES, DOC?
-- RQ3 Protocol: how do answers change between Pipeline A and Pipeline B?
-- RQ4 Sensitivity: embedding brand vs classifier head, which moves scores more?
+- Old models work but they need heavy training and cost a lot.
+- No one was sure if the good scores came from the smart model or just from the special data.
+- Today, new AI debt is mostly test and requirement debt, not only bad code design.
+- So we tested one simple idea in two different ways and also checked it on 458k real issues. That is our work.
 
 ============================================================
-SLIDE 9 - Methodology 2: shared recipe
+SLIDE 8 - Methodology 1: what we want to answer
 ============================================================
-Heading: Same cheap recipe everywhere, so A vs B is a fair fight
+Heading: Our 4 simple questions
 
-- Step 1: take artifact text. Step 2: frozen encoder to 1024-d vector (mean-pool, L2-normalize).
-- Step 3: XGBoost (main) or logistic regression (ablation). No BERT or BiLSTM fine-tuning.
-- Two steps per text: identify SATD vs Not-SATD, then categorize SATD into C/D, REQ, TES, DOC.
-- Separate model per artifact. Metric: macro F1 on held-out test.
+- Q1: Can our simple method find SATD? (like BiLSTM does)
+- Q2: Can it tell the SATD type? (like BERT does) - types are code/design, requirement, test, doc
+- Q3: Do the answers change if we change the data?
+- Q4: Which matters more - the embedding model or the classifier?
 
-[SCREENSHOT PLACEHOLDER: flowchart Text -> Embedding -> Classifier -> Answer]
-
-============================================================
-SLIDE 10 - Methodology 3: two pipelines
-============================================================
-Heading: Two data protocols, one classifier stack
-
-- Pipeline A (rebuild): 31 sources, ~386k clean rows, T5 five-class balance, split after augmentation, Qwen3 + E5 = 32 models.
-- Pipeline B (paper protocol): 4 AugGPT files, ~95.7k rows, Not-SATD majority kept, split before extra augmentation, Qwen3 + E5 = 32, plus BGE-M3 = 16.
-- Rule: never average A and B into one score. Commit baselines marked * are supervisor replication.
+In simple words: does a cheap method work, and when does it break?
 
 ============================================================
-SLIDE 11 - Implementation 1: data and models
+SLIDE 9 - Methodology 2: our steps
 ============================================================
-Heading: Clean data on Drive, 80 model combinations trained
+Heading: Our steps are the same every time - that is why the test is fair
 
-- Raw 31 files from our senior [Senior Name]; cleaned 820,885 rows down to ~386k; splits 59,105 / 7,390 / 7,395.
-- Drive layout: 01_raw_sources, 02_processed_data, 03_embeddings, 04_trained_models (32 joblib heads).
-- Encoders: Qwen3-Embedding-0.6B, E5-Large-v2, BGE-M3 (B only). GPU for embeddings, CPU for classifiers.
-- XGBoost won every recorded pair against logistic regression.
+- Take the text (a comment, issue, commit, or pull request).
+- Turn it into numbers using a ready-made model. We do not train this part.
+- Use a small classifier on those numbers. Main one is XGBoost.
+- Step 1: is it SATD or not? Step 2: if yes, what type?
+
+[SCREENSHOT PLACEHOLDER: simple picture Text -> Numbers -> Answer]
+
+============================================================
+SLIDE 10 - Methodology 3: we tried two different data setups
+============================================================
+Heading: Same steps, two different data setups
+
+- Setup A: we mixed 31 files, about 386k rows, made all 5 groups equal.
+- Setup B: we used only the 4 files from the paper, about 95k rows, kept it like real life where most data is Not-SATD.
+- Setup A has 32 models, Setup B has 32 + 16 more with BGE-M3.
+- We never mix scores of A and B together.
+
+============================================================
+SLIDE 11 - Implementation 1: what we built first
+============================================================
+Heading: From 31 files to 80 models
+
+- Our senior [Senior Name] gave 31 files. We cleaned them: 820k rows became about 386k good rows.
+- We split: 59k for training, 7k for checking, 7k for final test.
+- On Drive: raw files, clean files, number files (embeddings), and saved models.
+- We tried 3 models (Qwen3, E5, BGE-M3). XGBoost was best every time.
 
 [SCREENSHOT PLACEHOLDER: Drive folder screenshot]
 
 ============================================================
-SLIDE 12 - Implementation 2: applied track + demo
+SLIDE 12 - Implementation 2: testing on many real issues + demo
 ============================================================
-Heading: From lab scores to 458k real issues and a live tool
+Heading: Then we tested on many new issues and built a live demo
 
-- Applied run: Pipeline A issue heads (Qwen3+XGBoost) over 458,232 unseen issues, 3 views (title, description, both), Kaggle 2xT4, 100% coverage, Parquet + PDF published.
-- Demo: Gradio app in Demo folder with the same trained heads; paste text, see Identify then Categorize plus confidence bars and Title vs Description vs Both compare.
-- Preload models until status says Ready; 2 prepared examples; large browser zoom.
+- We took our best model and ran it on 458,232 new issues no one has labeled before.
+- We checked 3 things: title only, description only, title + description together.
+- Demo: you paste any text, it says SATD or not, and if yes, tells the type. It also shows confidence.
 
 [SCREENSHOT PLACEHOLDER: demo app window]
 
 ============================================================
-SLIDE 13 - Results 1: finding SATD
+SLIDE 13 - Results 1: can we find SATD?
 ============================================================
-Heading: Finding SATD recovers only under the paper distribution
+Heading: Finding SATD works only when the data looks like the paper
 
-Finding SATD, macro F1 (* = supervisor replication):
+Finding SATD, score is macro F1 (higher is better, * means teacher checked value):
 Comments: BiLSTM 0.939 | A 0.915 | B-Qwen3 0.966 | B-E5 0.959 | B-BGE 0.959
 Issues: 0.878 | 0.798 | 0.866 | 0.863 | 0.853
 Pull requests: 0.862 | 0.792 | 0.864 | 0.870 | 0.858
 Commits: 0.910* | 0.751 | 0.892 | 0.882 | 0.901
 
-Point: Pipeline A loses all four; Pipeline B wins comments and pull requests. Finding is protocol-sensitive.
+In simple words: Setup A failed for all 4 places. Setup B won on comments and pull requests.
 
-[SCREENSHOT PLACEHOLDER: identification table bar chart, best cells highlighted]
+[SCREENSHOT PLACEHOLDER: simple bar chart, color the best numbers]
 
 ============================================================
-SLIDE 14 - Results 2: typing SATD
+SLIDE 14 - Results 2: can we tell the SATD type?
 ============================================================
-Heading: Typing SATD beats BERT on 3 of 4 artifacts in both pipelines
+Heading: Telling the type is our best result
 
-Typing SATD, macro F1:
+Typing SATD, score is macro F1:
 Comments: BERT 0.882 | A 0.904 | B-Qwen3 0.947 | B-E5 0.958 | B-BGE 0.956
 Issues: 0.899 | 0.941 | 0.944 | 0.950 | 0.956
 Pull requests: 0.876 | 0.936 | 0.955 | 0.934 | 0.964
 Commits: 0.980* | 0.959 | 0.964 | 0.949 | 0.960
 
-Point: our strongest win; commits stay below 0.980. Example: pull requests BGE-M3 0.964 vs 0.876.
+In simple words: we beat BERT on comments, issues, and pull requests. Both setups. Commits are still hard.
 
-[SCREENSHOT PLACEHOLDER: categorization table bar chart, best cells highlighted]
+[SCREENSHOT PLACEHOLDER: simple bar chart, color the best numbers]
 
 ============================================================
-SLIDE 15 - Results 3: scale + what mattered
+SLIDE 15 - Results 3: what many real issues told us
 ============================================================
-Heading: 458k issues confirm it, and the head mattered more than the brand
+Heading: Real issues show more debt in descriptions, and the classifier mattered most
 
-- 458k unseen issues: title 38.2% SATD (175,213), description 58.9% (269,814), title+description 55.2% (252,778). Descriptions carry +20.7pp more signal.
-- Pipeline B combined with XGBoost: BGE-M3 0.9261, Qwen3 ~0.9248, E5 0.9206; BGE-M3 with logistic regression only ~0.85.
-- Lesson: classifier choice moved scores more than swapping embedding brands.
+- 458k new issues: title 38% SATD, description 59% SATD, both together 55% SATD.
+- So the description has about 20% more debt signal than the title alone.
+- With XGBoost: BGE-M3 0.926, Qwen3 0.925, E5 0.921 - almost same.
+- With simple LogReg: score drops to about 0.85. So the classifier matters more than which embedding we pick.
 
-[SCREENSHOT PLACEHOLDER: 38.2 / 58.9 / 55.2 distribution bars]
+[SCREENSHOT PLACEHOLDER: 3 bars for 38.2 / 58.9 / 55.2]
 
 ============================================================
 SLIDE 16 - Challenges and Limitations
 ============================================================
-Heading: Honest limits - what was hard and what we do not claim
+Heading: What was hard and what we do not claim
 
-- Cleaning 31 files and matching labels took most of the early time.
-- GPU limits: long descriptions cut at 256 tokens, 16.3% truncated.
-- Pipeline A splits after paraphrasing, so synthetic siblings can leak across splits; A also includes the paper AugGPT files.
-- 458k issues have no ground truth: triage resource, not an accuracy benchmark.
-- BGE-M3 training notebook is not in the repo (results only). Short commits remain hardest.
-- We do not claim bigger models will automatically fix finding SATD.
+- Cleaning 31 files and fixing labels took the most time.
+- Our GPU was small, so long texts were cut to 256 pieces. 16% were cut.
+- In Setup A, similar texts can appear in both train and test by mistake.
+- The 458k issues have no correct answer set, so we cannot say how accurate it is there.
+- BGE-M3 code is not saved in the repo. Short commits are still the hardest.
 
 ============================================================
 SLIDE 17 - Conclusion and Future Direction
 ============================================================
-Heading: A cheaper typing recipe that holds, plus a verification-first roadmap
+Heading: What we learned and what we will do next
 
-Conclusions:
-- Frozen embeddings + XGBoost type SATD better than fine-tuned BERT on comments, issues, and pull requests, in both pipelines.
-- Finding SATD is distribution-specific: it recovers only under the paper protocol.
-- Validated at scale on 458k real issues with a working demo.
+What we learned:
+- Cheap models can tell SATD types better than BERT on 3 of 4 places.
+- Finding SATD depends on the data style.
+- We checked this on two setups and on 458k real issues, with a working demo.
 
-Future:
-- Near term: code encoders (CodeBERT family), KeyBERT keyword features (1024+9 retrain), full error analysis, remaining heads on the same 458k.
-- Longer term: SATD in Agile practice; SATD, developer emotion, and issue resolution time; verification-first agent design.
+What is next:
+- Soon: try code models like CodeBERT, add keyword help, check errors better, test other models on same 458k.
+- Later: study SATD in Agile teams and link SATD to fixing time and emotions.
 
 ============================================================
 SLIDE 18 - Github Link and Individual Contribution
 ============================================================
-Heading: Code, data, and who did what
+Heading: Where to find our work and who did what
 
 GitHub: https://github.com/A-Piyas-04/SATD-embedding-DP2
 Data and models (Drive): https://drive.google.com/drive/folders/1E-jzrNGE2NyKEsrI8Ud9Phk3gx_8a2dD?usp=sharing
 458k input: https://drive.google.com/file/d/1e9ZiR2VOglBilEEnJIfSWA_UkNudjEym/view?usp=sharing
 458k output: https://drive.google.com/file/d/1BTzQmgwanxi5YdCh4zQUGOf1XT5CR5g-/view?usp=drive_link
 
-[Name 1 - ID]: Pipeline A rebuild (notebooks, results), docs, integration
-[Name 2 - ID]: Pipeline B paper protocol + BGE-M3 (navid-experiment), comparison reports
-[Name 3 - ID]: 458k applied inference (musaddiq_rafi), optimized batch notebooks
-Shared: 8-paper literature review, dual-protocol analysis, slides, demo
+[Name 1 - ID]: Setup A - mixed 31 files, cleaned data, made models
+[Name 2 - ID]: Setup B - used paper files, tested BGE-M3, made reports
+[Name 3 - ID]: Ran 458k test and built the fast version
+Shared: read 8 papers, analyzed both setups, made slides and demo
 
-Thank you - questions welcome. Contact: [email]
+Thank you - any questions? Contact: [email]
 
 [SCREENSHOT PLACEHOLDER: QR code to the GitHub repo]
