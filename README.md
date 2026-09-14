@@ -10,7 +10,7 @@ This repository now covers the full arc from **controlled experiments (Pipelines
 |---|---|
 | **Baseline paper** | Sutoyo, E., Avgeriou, P., & Capiluppi, A. (2024). *Deep Learning and Data Augmentation for Detecting Self-Admitted Technical Debt.* [arXiv:2410.15804](https://arxiv.org/abs/2410.15804) |
 | **Progress report** | [docs/SATD_Research_Progress.md](docs/SATD_Research_Progress.md) |
-| **Data and models** | [Google Drive — SATD Project Data & Models](https://drive.google.com/drive/folders/1E-jzrNGE2NyKEsrI8Ud9Phk3gx_8a2dD?usp=sharing) |
+| **Data and models** | [Google Drive — SATD Project Data & Models (Pipeline 1)](https://drive.google.com/drive/folders/1E-jzrNGE2NyKEsrI8Ud9Phk3gx_8a2dD?usp=sharing) [Pipeline 2](https://drive.google.com/drive/folders/1FUEQaElRBKlYnNHx5tRConDKHigb5BBr?usp=sharing) |
 | **New-issue input (458k rows)** | [issue_202608272234.parquet](https://drive.google.com/file/d/1e9ZiR2VOglBilEEnJIfSWA_UkNudjEym/view?usp=sharing) |
 | **New-issue output (classified)** | [satd_classification_results.parquet](https://drive.google.com/file/d/1BTzQmgwanxi5YdCh4zQUGOf1XT5CR5g-/view?usp=drive_link) |
 | **Inference notebook (V2, executed)** | [`musaddiq_rafi/satd-classifications-optimized V2.ipynb`](musaddiq_rafi/satd-classifications-optimized%20V2.ipynb) |
